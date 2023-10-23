@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <wait.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "readcmd.h"
 
@@ -17,9 +18,15 @@ void execute(struct cmdline *l)
     {
         char **cmd = l->seq[i];
         pid_t pid = fork();
-        if (!pid)
+        if(pid == - 1) {
+            fprintf(stderr, "fork error\n");
+        }
+        else if (!pid)
         {
             execvp(cmd[0], cmd);
+            // if command doesn't exist
+            fprintf(stderr, "command not found\n");
+            exit(0);
         }
         else
         {
