@@ -30,13 +30,13 @@ void jobs()
     while (current_node)
     {
         pid_t child_pid = waitpid(current_node->pid, &status, WNOHANG);
-        printf("%u, %u\n", status, child_pid);
-        if (!WIFEXITED(status)) // child process has terminated
+        if (child_pid) // child process has terminated
         {
             // delete node
             if (!previous_node)
             {
                 job_node *to_delete = current_node;
+                head = current_node->next;
                 current_node = current_node->next;
                 free(to_delete);
             }

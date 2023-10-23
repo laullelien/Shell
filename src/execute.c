@@ -8,7 +8,7 @@
 #include "jobs.h"
 #include "readcmd.h"
 
-#define MAX_PROCESS_NUMBER 100
+#define MAX_PROCESS_NUMBER 64
 
 pid_t pid_list[MAX_PROCESS_NUMBER];
 
@@ -26,9 +26,14 @@ void execute(struct cmdline *l)
     for (int i = 0; l->seq[i] != 0; i++)
     {
         char **cmd = l->seq[i];
+        if (!strcmp(cmd[0], "jobs"))
+        {
+            jobs();
+            continue;
+        }
         pid_t pid = fork();
 
-        if (pid == -1) //fail to fork
+        if (pid == -1) // fail to fork
         {
             perror("fork");
             exit(EXIT_FAILURE);
@@ -37,16 +42,13 @@ void execute(struct cmdline *l)
         {
             execvp(cmd[0], cmd);
             // if command doesn't exist
-            if (!strcmp(cmd[0], "jobs")){
-                jobs();
-                exit(0);
-            }
             fprintf(stderr, "command not found\n");
             exit(0);
         }
         else // daddy pid != 0
         {
-            if (l->bg){
+            if (l->bg)
+            {
                 create_job(pid, cmd[0]);
             }
             pid_list[pid_nb] = pid;
