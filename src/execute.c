@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include "jobs.h"
 #include "readcmd.h"
 
 #define MAX_PROCESS_NUMBER 100
@@ -24,23 +25,30 @@ void execute(struct cmdline *l)
 
     for (int i = 0; l->seq[i] != 0; i++)
     {
+        char **cmd = l->seq[i];
         pid_t pid = fork();
 
-        if (pid == -1)
+        if (pid == -1) //fail to fork
         {
             perror("fork");
             exit(EXIT_FAILURE);
         }
-        else if (!pid)
+        else if (!pid) // son pid = 0
         {
-            char **cmd = l->seq[i];
             execvp(cmd[0], cmd);
             // if command doesn't exist
+            if (!strcmp(cmd[0], "jobs")){
+                jobs();
+                exit(0);
+            }
             fprintf(stderr, "command not found\n");
             exit(0);
         }
-        else
+        else // daddy pid != 0
         {
+            if (l->bg){
+                create_job(pid, cmd[0]);
+            }
             pid_list[pid_nb] = pid;
         }
 

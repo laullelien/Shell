@@ -2,14 +2,14 @@
 
 #define JOB_NAME_MAX_LENGTH 20
 
-typedef struct
+typedef struct job_node
 {
-    job_node *next;
+    struct job_node *next;
     char name[JOB_NAME_MAX_LENGTH];
     pid_t pid;
 } job_node;
 
-void insert(job_node *head, job_node *node);
+void create_job(pid_t pid, char *name);
 
-void jobs(job_node *head);
+void jobs(void);
 
