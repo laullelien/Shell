@@ -12,6 +12,7 @@
 #include "variante.h"
 #include "readcmd.h"
 #include "execute.h"
+#include "time.h"
 
 #ifndef VARIANTE
 #error "Variante non défini !!"
@@ -22,30 +23,6 @@
  * following lines.  You may also have to comment related pkg-config
  * lines in CMakeLists.txt.
  */
-
-#if USE_GUILE == 1
-#include <libguile.h>
-
-int question6_executer(char *line)
-{
-	/* Question 6: Insert your code to execute the command line
-	 * identically to the standard execution scheme:
-	 * parsecmd, then fork+execvp, for a single command.
-	 * pipe and i/o redirection are not required.
-	 */
-	printf("Not implemented yet: can not execute %s\n", line);
-
-	/* Remove this line when using parsecmd as it will free it */
-	free(line);
-
-	return 0;
-}
-
-SCM executer_wrapper(SCM x)
-{
-	return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
-}
-#endif
 
 void terminate(char *line)
 {
@@ -59,8 +36,70 @@ void terminate(char *line)
 	exit(0);
 }
 
+void parse_exec(char *line)
+{
+	struct cmdline *l;
+
+	/* parsecmd free line and set it up to 0 */
+	l = parsecmd(&line);
+
+	/* If input stream closed, normal termination */
+	if (!l)
+	{
+
+		terminate(0);
+	}
+
+	if (l->err)
+	{
+		/* Syntax error, read another command */
+		printf("error: %s\n", l->err);
+		return;
+	}
+
+	if (l->in)
+		printf("in: %s\n", l->in);
+	if (l->out)
+		printf("out: %s\n", l->out);
+	if (l->bg)
+		printf("background (&)\n");
+
+	/* Display each command of the pipe */
+	for (int i = 0; l->seq[i] != 0; i++)
+	{
+		char **cmd = l->seq[i];
+		printf("seq[%d]: ", i);
+		for (int j = 0; cmd[j] != 0; j++)
+		{
+			printf("'%s' ", cmd[j]);
+		}
+		printf("\n");
+	}
+
+	execute(l);
+
+	/* Remove this line when using parsecmd as it will free it */
+	free(line);
+}
+
+#if USE_GUILE == 1
+#include <libguile.h>
+
+int question6_executer(char *line)
+{
+	parse_exec(line);
+	return 0;
+}
+
+SCM executer_wrapper(SCM x)
+{
+	return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
+}
+#endif
+
 int main()
 {
+	init_sigaction();
 	printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
 
 #if USE_GUILE == 1
@@ -71,9 +110,7 @@ int main()
 
 	while (1)
 	{
-		struct cmdline *l;
 		char *line = 0;
-		int i, j;
 		char *prompt = "ensishell>";
 
 		/* Readline use some internal memory structure that
@@ -101,43 +138,6 @@ int main()
 		}
 #endif
 
-		/* parsecmd free line and set it up to 0 */
-		l = parsecmd(&line);
-
-		/* If input stream closed, normal termination */
-		if (!l)
-		{
-
-			terminate(0);
-		}
-
-		if (l->err)
-		{
-			/* Syntax error, read another command */
-			printf("error: %s\n", l->err);
-			continue;
-		}
-
-		if (l->in)
-			printf("in: %s\n", l->in);
-		if (l->out)
-			printf("out: %s\n", l->out);
-		if (l->bg)
-			printf("background (&)\n");
-
-		/* Display each command of the pipe */
-		for (i = 0; l->seq[i] != 0; i++)
-		{
-			char **cmd = l->seq[i];
-			printf("seq[%d]: ", i);
-			for (j = 0; cmd[j] != 0; j++)
-			{
-				printf("'%s' ", cmd[j]);
-			}
-			printf("\n");
-		}
-
-		execute(l);
-
+		parse_exec(line);
 	}
 }

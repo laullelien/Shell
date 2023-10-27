@@ -4,6 +4,8 @@
 #include <wait.h>
 #include <assert.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "jobs.h"
 #include "readcmd.h"
@@ -40,6 +42,43 @@ void execute(struct cmdline *l)
         }
         else if (!pid) // son pid = 0
         {
+            // first process
+            // We only redirect if there is a pipe
+            if (i == 0 && l->seq[i + 1] != NULL)
+            {
+                close(fd[0]);
+                dup2(fd[1], 1);
+            }
+            if (i == 1)
+            {
+                close(fd[1]);
+                dup2(fd[0], 0);
+            }
+            // output redirection
+            if (l->seq[i + 1] == NULL)
+            {
+                if (l->out)
+                {
+                    int newfd = open(l->out, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                    if (newfd == -1)
+                    {
+                        perror("open file");
+                        exit(EXIT_FAILURE);
+                    }
+                    dup2(newfd, 1);
+                }
+            }
+            // input redirection
+            if (l->in && i == 0)
+            {
+                int newfd = open(l->in, O_RDONLY);
+                if (newfd == -1)
+                {
+                    perror("open file");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(newfd, 0);
+            }
             execvp(cmd[0], cmd);
             // if command doesn't exist
             fprintf(stderr, "command not found\n");
@@ -56,6 +95,9 @@ void execute(struct cmdline *l)
 
         pid_nb++;
     }
+
+    close(fd[0]);
+    close(fd[1]);
 
     // We wait for all child processes to finish
     if (!l->bg)
