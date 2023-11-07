@@ -41,11 +41,6 @@ void execute(struct cmdline *l)
             X = atoi(cmd[1]);
             limit.rlim_cur = X;
             limit.rlim_max = X + 5;
-            if(X != 0) {
-                if(setrlimit(RLIMIT_CPU, &limit) != 0) {
-                    perror("Setrlimit failed");
-                }
-            }
             continue;
         }
         pid_t pid = fork();
@@ -55,8 +50,13 @@ void execute(struct cmdline *l)
             perror("fork");
             exit(EXIT_FAILURE);
         }
-        else if (!pid) // son pid = 0
+        else if (pid == 0) // child
         {
+            if(X != 0) {
+                if(setrlimit(RLIMIT_CPU, &limit) != 0) {
+                    perror("Setrlimit failed");
+                }
+            }
             // first process
             // We only redirect if there is a pipe
             if (i == 0 && l->seq[i + 1] != NULL)
@@ -99,7 +99,7 @@ void execute(struct cmdline *l)
             fprintf(stderr, "command not found\n");
             exit(0);
         }
-        else // daddy pid != 0
+        else // pid != 0 (daddy)
         {
             if (l->bg)
             {
