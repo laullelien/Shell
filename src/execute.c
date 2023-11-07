@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "jobs.h"
 #include "readcmd.h"
@@ -13,6 +15,8 @@
 #define MAX_PROCESS_NUMBER 64
 
 pid_t pid_list[MAX_PROCESS_NUMBER];
+int X;
+struct rlimit limit;
 
 void execute(struct cmdline *l)
 {
@@ -33,6 +37,12 @@ void execute(struct cmdline *l)
             jobs();
             continue;
         }
+        else if(!strcmp(cmd[0], "ulimit")) {
+            X = atoi(cmd[1]);
+            limit.rlim_cur = X;
+            limit.rlim_max = X + 5;
+            continue;
+        }
         pid_t pid = fork();
 
         if (pid == -1) // fail to fork
@@ -42,6 +52,17 @@ void execute(struct cmdline *l)
         }
         else if (!pid) // son pid = 0
         {
+            printf("%i\n", X);
+            if(X != 0) {
+                printf("%i\n", X);
+                if(setrlimit(RLIMIT_CPU, &limit) != 0) {
+                    printf("not succes\n");
+                    perror("Setrlimit failed");
+                }
+                else{
+                    printf("succes\n");
+                }
+            }
             // first process
             // We only redirect if there is a pipe
             if (i == 0 && l->seq[i + 1] != NULL)
