@@ -52,16 +52,8 @@ void execute(struct cmdline *l)
         }
         else if (!pid) // son pid = 0
         {
-            printf("%i\n", X);
-            if(X != 0) {
-                printf("%i\n", X);
-                if(setrlimit(RLIMIT_CPU, &limit) != 0) {
-                    printf("not succes\n");
-                    perror("Setrlimit failed");
-                }
-                else{
-                    printf("succes\n");
-                }
+            if(X != 0 && setrlimit(RLIMIT_CPU, &limit) != 0) {
+                    perror("setrlimit failed");
             }
             // first process
             // We only redirect if there is a pipe
@@ -76,18 +68,16 @@ void execute(struct cmdline *l)
                 dup2(fd[0], 0);
             }
             // output redirection
-            if (l->seq[i + 1] == NULL)
-            {
-                if (l->out)
+            if (l->out && l->seq[i + 1] == NULL)
                 {
                     int newfd = open(l->out, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                    ftruncate(newfd, 0);
                     if (newfd == -1)
                     {
                         perror("open file");
                         exit(EXIT_FAILURE);
                     }
                     dup2(newfd, 1);
-                }
             }
             // input redirection
             if (l->in && i == 0)
