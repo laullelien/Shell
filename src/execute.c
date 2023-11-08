@@ -50,7 +50,7 @@ void execute(struct cmdline *l)
             perror("fork");
             exit(EXIT_FAILURE);
         }
-        else if (!pid) // son pid = 0
+        else if (pid == 0) // child
         {
             if(X != 0 && setrlimit(RLIMIT_CPU, &limit) != 0) {
                     perror("setrlimit failed");
@@ -95,7 +95,7 @@ void execute(struct cmdline *l)
             fprintf(stderr, "command not found\n");
             exit(0);
         }
-        else // daddy pid != 0
+        else // pid != 0 (daddy)
         {
             if (l->bg)
             {

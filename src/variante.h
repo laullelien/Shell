@@ -2,7 +2,7 @@
 #define VARIANTE_H
 
 #define LOGINS Aur__lien_Delory_deloryau_Yung_Pheng_Thor_thory
-#define SUJET 10
+#define SUJET 7
 #define USE_GUILE 1
 #define USE_GNU_READLINE 1
 
