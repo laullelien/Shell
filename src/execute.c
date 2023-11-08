@@ -119,4 +119,6 @@ void execute(struct cmdline *l)
             waitpid(pid_list[pid_nb], NULL, 0);
         }
     }
+    // wait for child to fully print
+    usleep(100000);
 }

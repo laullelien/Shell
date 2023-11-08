@@ -46,7 +46,7 @@ class Test1ForkExec < Minitest::Test
   def test_printf
     @pipe_write.puts("printf 'toto%dtoto' 10")
     a = @pty_read.expect(/toto10toto/, DELAI)
-    refute_nil(a, "Sortie incohérente pour 'seq 0 3'")
+    refute_nil(a, "Sortie incohérente pour 'printf 'toto%dtoto' 10'")
   end
 
   def test_all
